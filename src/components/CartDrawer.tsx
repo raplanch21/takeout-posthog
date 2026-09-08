@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { usePostHog } from '@posthog/react'
 import { getRestaurant } from '../data/restaurants'
 import { fee, money } from '../lib/format'
 import { useCart, useStoreDispatch } from '../lib/store'
@@ -14,6 +15,7 @@ export function CartDrawer() {
   const dispatch = useStoreDispatch()
   const navigate = useNavigate()
   const location = useLocation()
+  const posthog = usePostHog()
 
   const restaurant = getRestaurant(cart.restaurantId ?? undefined)
 
@@ -38,6 +40,11 @@ export function CartDrawer() {
   if (!cartOpen) return null
 
   const goToCheckout = () => {
+    posthog?.capture('checkout_started', {
+      restaurant_id: cart.restaurantId,
+      item_count: cart.itemCount,
+      subtotal: cart.subtotal,
+    })
     closeCart()
     navigate('/checkout')
   }

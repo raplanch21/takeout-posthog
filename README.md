@@ -1,8 +1,8 @@
 # Takeout
 
-A demo food delivery web app. Frontend only: no backend, no API keys, no network
-requests, no image hosts. Everything runs from in-memory data, so it looks the
-same offline as it does on stage.
+A demo food delivery web app. Frontend only: no backend and no image hosts. All
+app data runs from memory, so the app looks the same offline as it does on stage.
+The only network calls send product analytics to PostHog.
 
 ## Run it
 
@@ -59,6 +59,7 @@ src/
     UIProvider.tsx      Provider for that ephemeral UI state
     tracking.ts         Order timeline stages and time-derived progress
     format.ts           Currency, dates, and card input formatting
+    analytics.ts        PostHog client setup
   components/           Header, cart drawer, cards, and other shared pieces
   pages/                Browse, RestaurantMenu, Checkout, TrackOrder, Orders
   index.css             Design tokens and every component style
@@ -75,6 +76,19 @@ A few conventions to know before editing:
 - **One cart, one restaurant**, matching how real delivery apps behave.
 - **Food photos are emoji on gradients** (`components/Tile.tsx`), which keeps
   the app dependency-free and offline.
+
+## Analytics
+
+The app sends product analytics to [PostHog](https://posthog.com). `posthog-js`
+starts in `src/lib/analytics.ts` and reads its keys from the environment. Copy
+`.env.example` to `.env` and fill in your project values, or edit the committed
+`.env`. The project token is a public client-side key, so it is safe to ship in
+the browser bundle.
+
+PostHog captures page views and clicks on its own. On top of that, the app sends
+funnel events: `restaurant_opened`, `dish_added_to_cart`, `checkout_started`,
+`order_placed`, and `order_reordered`. A missing token never breaks the app —
+development throws so the gap is obvious, and production stays a silent no-op.
 
 ## Not included
 

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
+import { usePostHog } from '@posthog/react'
 import { getRestaurant } from '../data/restaurants'
 import { Tile } from '../components/Tile'
 import { fee, formatCardNumber, formatExpiry, money } from '../lib/format'
@@ -76,6 +77,7 @@ export function Checkout() {
   const cart = useCart()
   const dispatch = useStoreDispatch()
   const { notify } = useUI()
+  const posthog = usePostHog()
 
   const [fulfillment, setFulfillment] = useState<Fulfillment>('delivery')
   const [tipPercent, setTipPercent] = useState(0.15)
@@ -134,6 +136,19 @@ export function Checkout() {
     // A beat of latency so the button state reads as a real submission.
     window.setTimeout(() => {
       dispatch({ type: 'order/place', order })
+      posthog?.capture('order_placed', {
+        order_id: order.id,
+        restaurant_id: order.restaurantId,
+        restaurant_name: order.restaurantName,
+        fulfillment: order.fulfillment,
+        item_count: cart.itemCount,
+        subtotal: totals.subtotal,
+        delivery_fee: totals.deliveryFee,
+        service_fee: totals.serviceFee,
+        tip: totals.tip,
+        total: totals.total,
+        revenue: totals.total / 100,
+      })
       setPlacedOrderId(order.id)
     }, 550)
   }
