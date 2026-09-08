@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { usePostHog } from '@posthog/react'
 import { getRestaurant } from '../data/restaurants'
 import type { MenuItem, MenuSection } from '../data/restaurants'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -16,9 +17,20 @@ export function RestaurantMenu() {
   const cart = useCart()
   const dispatch = useStoreDispatch()
   const { openCart, notify } = useUI()
+  const posthog = usePostHog()
 
   /** Set when adding would replace another restaurant's cart. */
   const [conflictItem, setConflictItem] = useState<MenuItem | null>(null)
+
+  // Opening a menu is the top of the order funnel, so it is worth a view event.
+  useEffect(() => {
+    if (!restaurant) return
+    posthog?.capture('restaurant_opened', {
+      restaurant_id: restaurant.id,
+      restaurant_name: restaurant.name,
+      cuisine: restaurant.cuisine,
+    })
+  }, [posthog, restaurant])
 
   const sections = useMemo<MenuSection[]>(() => {
     if (!restaurant) return []
@@ -54,6 +66,13 @@ export function RestaurantMenu() {
 
   const addItem = (item: MenuItem) => {
     dispatch({ type: 'cart/add', restaurantId: restaurant.id, item })
+    posthog?.capture('dish_added_to_cart', {
+      item_id: item.id,
+      item_name: item.name,
+      price: item.price,
+      restaurant_id: restaurant.id,
+      restaurant_name: restaurant.name,
+    })
     notify(`${item.name} added`)
   }
 
