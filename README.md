@@ -13,6 +13,18 @@ npm run dev
 
 Then open http://localhost:5173.
 
+## Deploy it
+
+The app has a live home so real visits reach PostHog. Every push to `main`
+builds the app and publishes it to GitHub Pages through
+`.github/workflows/deploy.yml`. The site loads from the `/takeout-posthog/`
+subpath, so `vite.config.ts` sets that base for production builds and
+`main.tsx` passes the same base to the router.
+
+The workflow needs Pages set to build from GitHub Actions once: open the
+repository **Settings → Pages** and set **Source** to **GitHub Actions**. The
+public URL is https://raplanch21.github.io/takeout-posthog/.
+
 Other scripts:
 
 ```bash
